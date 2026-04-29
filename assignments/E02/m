@@ -1,0 +1,577 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "DoKSQeoh7YLr"
+   },
+   "source": [
+    "<a target=\"_blank\" href=\"https://colab.research.google.com/github/cesarschoollectures/am-labs/blob/main/assignments/E01_Decision_Tree.ipynb\">\n",
+    "<img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/>\n",
+    "</a>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "Coo9ZbTW5BSM"
+   },
+   "source": [
+    "# Aprendizado de Máquina"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Nesta atividade, você irá trabalhar com o dataset Fashion MNIST utilizando modelos de classificação do sklearn.\n",
+    "\n",
+    "O foco NÃO é apenas obter bons resultados, mas garantir que o experimento seja:\n",
+    "- correto\n",
+    "- reprodutível\n",
+    "- bem estruturado\n",
+    "- criticamente analisado\n",
+    "\n",
+    "# Dicas importantes\n",
+    "\n",
+    "## Sobre o dataset (Fashion MNIST)\n",
+    "\n",
+    "- Utilize `fetch_openml` do sklearn para carregar os dados\n",
+    "- Use: `as_frame=False`\n",
+    "- Use: `mnist_784`\n",
+    "- Converta os rótulos para inteiro:\n",
+    "  \n",
+    "  ```python\n",
+    "  y = y.astype(int)\n",
+    "  ```"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "lqIII-im5Fc-"
+   },
+   "source": [
+    "# Questão 1\n",
+    "\n",
+    "Implemente uma função load_data(seed) que:\n",
+    "\n",
+    "Carregue o dataset `Fashion MNIST`\n",
+    "Realize a separação em treino e teste\n",
+    "Utilize `train_test_split` com controle de aleatoriedade\n",
+    "Retorne: `X_train`, `X_test`, `y_train`, `y_test`"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Depois responda: \n",
+    "É necessário normalizar os dados para esse tipo de modelo? Justifique."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "B6zJtn5x6kB7"
+   },
+   "source": [
+    "**Solução**:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "hkklD9cf42dT"
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.datasets import fetch_openml\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "\n",
+    "def load_data(seed, test_size=0.2, sample_size=10000):\n",
+    "    X, y = fetch_openml(\n",
+    "        \"Fashion-MNIST\",\n",
+    "        version=1,\n",
+    "        as_frame=False,\n",
+    "        return_X_y=True,\n",
+    "        parser=\"liac-arff\",\n",
+    "        data_home=\"./.sklearn_data\",\n",
+    "    )\n",
+    "    y = y.astype(int)\n",
+    "\n",
+    "    if sample_size is not None:\n",
+    "        X, _, y, _ = train_test_split(\n",
+    "            X,\n",
+    "            y,\n",
+    "            train_size=sample_size,\n",
+    "            stratify=y,\n",
+    "            random_state=123,\n",
+    "        )\n",
+    "\n",
+    "    X_train, X_test, y_train, y_test = train_test_split(\n",
+    "        X,\n",
+    "        y,\n",
+    "        test_size=test_size,\n",
+    "        stratify=y,\n",
+    "        random_state=seed,\n",
+    "    )\n",
+    "    return X_train, X_test, y_train, y_test\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "PS220_Jp5Hiy"
+   },
+   "source": [
+    "# Questão 2\n",
+    "\n",
+    "Implemente as funções:\n",
+    "\n",
+    "`train_random_forest(X_train, y_train, seed)`\n",
+    "`train_adaboost(X_train, y_train, seed)`\n",
+    "\n",
+    "## Requisitos:\n",
+    "\n",
+    "Utilizar os modelos do `sklearn`\n",
+    "Garantir reprodutibilidade com `random_state`"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "GRVkyUTN6nC4"
+   },
+   "source": [
+    "**Solução**:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "itlCFnLN6fZX"
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier\n",
+    "from sklearn.tree import DecisionTreeClassifier\n",
+    "\n",
+    "def train_random_forest(X_train, y_train, seed):\n",
+    "    model = RandomForestClassifier(\n",
+    "        n_estimators=100,\n",
+    "        random_state=seed,\n",
+    "        n_jobs=-1,\n",
+    "    )\n",
+    "    model.fit(X_train, y_train)\n",
+    "    return model\n",
+    "\n",
+    "def train_adaboost(X_train, y_train, seed):\n",
+    "    base_tree = DecisionTreeClassifier(max_depth=1, random_state=seed)\n",
+    "    model = AdaBoostClassifier(\n",
+    "        estimator=base_tree,\n",
+    "        n_estimators=100,\n",
+    "        random_state=seed,\n",
+    "    )\n",
+    "    model.fit(X_train, y_train)\n",
+    "    return model\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "-GPEXa6b5Mdj"
+   },
+   "source": [
+    "# Questão 3\n",
+    "\n",
+    "Implemente a função:\n",
+    "\n",
+    "- `evaluate(model, X_test, y_test)`\n",
+    "\n",
+    "Ela deve:\n",
+    "- Realizar predições\n",
+    "- Retornar a acurácia do modelo"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "UyQv_wiY6rws"
+   },
+   "source": [
+    "**Solução**:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "2Cph3ixX5OBF"
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.metrics import accuracy_score\n",
+    "\n",
+    "def evaluate(model, X_test, y_test):\n",
+    "    y_pred = model.predict(X_test)\n",
+    "    return accuracy_score(y_test, y_pred)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "p4f9YfY95OcM"
+   },
+   "source": [
+    "Nao e necessario normalizar os dados para `RandomForestClassifier` e `AdaBoostClassifier` com arvores como base, porque eles tomam decisoes por cortes nas features e nao por distancia entre vetores.\n",
+    "\n",
+    "Para deixar a execucao rapida e reprodutivel, os resultados abaixo foram calculados com uma amostra estratificada de `10.000` imagens do Fashion-MNIST.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "FRxSuiya5RDs"
+   },
+   "source": [
+    "# Questão 4\n",
+    "\n",
+    "Implemente a função:\n",
+    "\n",
+    "- `run_pipeline(model_type=\"rf\", seed=42)`\n",
+    "\n",
+    "Ela deve:\n",
+    "- Carregar os dados\n",
+    "- Treinar o modelo escolhido (`rf` ou `ab`)\n",
+    "- Avaliar o modelo\n",
+    "- Retornar a acurácia"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "lcGEK8nA67BP"
+   },
+   "source": [
+    "**Solução**:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "0PG_PNLL5SpM"
+   },
+   "outputs": [],
+   "source": [
+    "def run_pipeline(model_type=\"rf\", seed=42):\n",
+    "    X_train, X_test, y_train, y_test = load_data(seed)\n",
+    "\n",
+    "    if model_type == \"rf\":\n",
+    "        model = train_random_forest(X_train, y_train, seed)\n",
+    "    elif model_type == \"ab\":\n",
+    "        model = train_adaboost(X_train, y_train, seed)\n",
+    "    else:\n",
+    "        raise ValueError(\"model_type deve ser 'rf' ou 'ab'\")\n",
+    "\n",
+    "    acc = evaluate(model, X_test, y_test)\n",
+    "    return acc\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "BF0PvWOd95B4"
+   },
+   "source": [
+    "Aqui o foco nao e profundidade de uma unica arvore, e sim comparar modelos de ensemble de forma reproduzivel e interpretar os resultados obtidos.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "_AgodBOa5TjD"
+   },
+   "source": [
+    "# Questão 5\n",
+    "\n",
+    "Execute o pipeline para ambos os modelos:\n",
+    "\n",
+    "- Random Forest\n",
+    "- AdaBoost\n",
+    "\n",
+    "## Apresente:\n",
+    "- Acurácia, Precisão, Recall e F1-Score de cada modelo\n",
+    "\n",
+    "## Responda:\n",
+    "- Qual modelo apresentou melhor desempenho inicial?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "0psd7qO77FRL"
+   },
+   "source": [
+    "**Solução**:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "LktZHv075Vdl"
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\n",
+    "\n",
+    "def compute_metrics(model, X_test, y_test):\n",
+    "    y_pred = model.predict(X_test)\n",
+    "    return {\n",
+    "        \"accuracy\": accuracy_score(y_test, y_pred),\n",
+    "        \"precision\": precision_score(y_test, y_pred, average=\"macro\"),\n",
+    "        \"recall\": recall_score(y_test, y_pred, average=\"macro\"),\n",
+    "        \"f1\": f1_score(y_test, y_pred, average=\"macro\"),\n",
+    "    }\n",
+    "\n",
+    "X_train, X_test, y_train, y_test = load_data(seed=42)\n",
+    "\n",
+    "rf_model = train_random_forest(X_train, y_train, seed=42)\n",
+    "ab_model = train_adaboost(X_train, y_train, seed=42)\n",
+    "\n",
+    "rf_metrics = compute_metrics(rf_model, X_test, y_test)\n",
+    "ab_metrics = compute_metrics(ab_model, X_test, y_test)\n",
+    "\n",
+    "print(\"Random Forest:\", rf_metrics)\n",
+    "print(\"AdaBoost:\", ab_metrics)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Resultados obtidos com `seed=42`:\n",
+    "\n",
+    "- Random Forest: acuracia `0.8525`, precisao `0.8520`, recall `0.8525`, F1-score `0.8502`\n",
+    "- AdaBoost: acuracia `0.5110`, precisao `0.4881`, recall `0.5110`, F1-score `0.4592`\n",
+    "\n",
+    "O melhor desempenho inicial foi do `Random Forest`, com vantagem ampla em todas as metricas.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "JlAfkhYa5yvW"
+   },
+   "source": [
+    "# Questão 6\n",
+    "\n",
+    "Execute o pipeline utilizando diferentes seeds (ex: 42 e 7).\n",
+    "\n",
+    "## Analise:\n",
+    "- Os resultados mudaram?\n",
+    "\n",
+    "## Responda:\n",
+    "- O experimento é reprodutível? Justifique."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "J7ZL8djT50Vk"
+   },
+   "source": [
+    "**Solução**:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "yqBA82cF51yc"
+   },
+   "outputs": [],
+   "source": [
+    "for seed in [42, 7]:\n",
+    "    rf_acc = run_pipeline(model_type=\"rf\", seed=seed)\n",
+    "    ab_acc = run_pipeline(model_type=\"ab\", seed=seed)\n",
+    "    print(f\"Seed = {seed}\")\n",
+    "    print(f\"  Random Forest acc: {rf_acc:.4f}\")\n",
+    "    print(f\"  AdaBoost acc: {ab_acc:.4f}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Com seeds diferentes, os resultados mudaram um pouco:\n",
+    "\n",
+    "- `seed=42`: Random Forest `0.8525`, AdaBoost `0.5110`\n",
+    "- `seed=7`: Random Forest `0.8445`, AdaBoost `0.5120`\n",
+    "\n",
+    "O experimento continua sendo reprodutivel porque a mesma seed reproduz os mesmos resultados. O que mudou foi a amostra treino/teste gerada por seeds diferentes, e isso alterou levemente a acuracia.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "xnBmNK6e-nnj"
+   },
+   "source": [
+    "# Questão 7\n",
+    "\n",
+    "Para pelo menos um dos modelos:\n",
+    "\n",
+    "- Compare a acurácia em treino e teste\n",
+    "\n",
+    "## Responda:\n",
+    "- Existe overfitting?\n",
+    "- Qual modelo tende a sofrer mais com isso?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = load_data(seed=42)\n",
+    "\n",
+    "rf_model = train_random_forest(X_train, y_train, seed=42)\n",
+    "ab_model = train_adaboost(X_train, y_train, seed=42)\n",
+    "\n",
+    "train_acc_rf = evaluate(rf_model, X_train, y_train)\n",
+    "test_acc_rf = evaluate(rf_model, X_test, y_test)\n",
+    "\n",
+    "train_acc_ab = evaluate(ab_model, X_train, y_train)\n",
+    "test_acc_ab = evaluate(ab_model, X_test, y_test)\n",
+    "\n",
+    "print(f\"Random Forest - treino: {train_acc_rf:.4f}\")\n",
+    "print(f\"Random Forest - teste: {test_acc_rf:.4f}\")\n",
+    "print(f\"AdaBoost - treino: {train_acc_ab:.4f}\")\n",
+    "print(f\"AdaBoost - teste: {test_acc_ab:.4f}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Comparando treino e teste com `seed=42`:\n",
+    "\n",
+    "- Random Forest: treino `1.0000`, teste `0.8525`\n",
+    "- AdaBoost: treino `0.5316`, teste `0.5110`\n",
+    "\n",
+    "Existe overfitting claro no `Random Forest`, porque ele memoriza muito melhor o treino do que generaliza no teste. O `AdaBoost` ficou bem mais fraco no geral, mas com diferenca menor entre treino e teste.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Questão 8\n",
+    "\n",
+    "Varie pelo menos um hiperparâmetro em cada modelo:\n",
+    "\n",
+    "- Random Forest: `n_estimators`\n",
+    "- AdaBoost: `n_estimators`\n",
+    "\n",
+    "## Analise:\n",
+    "- O desempenho muda significativamente?\n",
+    "\n",
+    "## Responda:\n",
+    "- Qual modelo é mais sensível a mudanças?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier\n",
+    "from sklearn.tree import DecisionTreeClassifier\n",
+    "\n",
+    "X_train, X_test, y_train, y_test = load_data(seed=42)\n",
+    "\n",
+    "print(\"Random Forest\")\n",
+    "for n_estimators in [50, 100, 200]:\n",
+    "    rf_model = RandomForestClassifier(\n",
+    "        n_estimators=n_estimators,\n",
+    "        random_state=42,\n",
+    "        n_jobs=-1,\n",
+    "    )\n",
+    "    rf_model.fit(X_train, y_train)\n",
+    "    rf_acc = evaluate(rf_model, X_test, y_test)\n",
+    "    print(f\"  n_estimators={n_estimators}: {rf_acc:.4f}\")\n",
+    "\n",
+    "print(\"\\nAdaBoost\")\n",
+    "for n_estimators in [50, 100, 200]:\n",
+    "    ab_model = AdaBoostClassifier(\n",
+    "        estimator=DecisionTreeClassifier(max_depth=1, random_state=42),\n",
+    "        n_estimators=n_estimators,\n",
+    "        random_state=42,\n",
+    "    )\n",
+    "    ab_model.fit(X_train, y_train)\n",
+    "    ab_acc = evaluate(ab_model, X_test, y_test)\n",
+    "    print(f\"  n_estimators={n_estimators}: {ab_acc:.4f}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Impacto de `n_estimators`:\n",
+    "\n",
+    "- Random Forest: `50 -> 0.8495`, `100 -> 0.8525`, `200 -> 0.8545`\n",
+    "- AdaBoost: `50 -> 0.5615`, `100 -> 0.5110`, `200 -> 0.6220`\n",
+    "\n",
+    "No `Random Forest`, o ganho foi pequeno e estavel. No `AdaBoost`, a variacao foi bem maior, entao ele se mostrou mais sensivel a esse hiperparametro neste experimento.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Questão 9\n",
+    "\n",
+    "Responda (máx. 2 parágrafos por item):\n",
+    "\n",
+    "1. A acurácia é suficiente para avaliar os modelos?\n",
+    "2. Como você garante que o resultado não ocorreu por acaso?\n",
+    "3. Cite dois possíveis problemas metodológicos neste experimento.\n",
+    "4. O pipeline implementado é confiável? Justifique."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "1. A acuracia nao e suficiente sozinha para avaliar os modelos, porque ela resume tudo em um unico numero e pode esconder erros importantes entre classes. Por isso, precisao, recall e F1-score ajudam a mostrar melhor o comportamento do classificador.\n",
+    "\n",
+    "2. Para reduzir a chance de o resultado ocorrer por acaso, usamos divisao estratificada, controle de seed e repeticao com seeds diferentes. Isso nao elimina toda variacao, mas mostra se o desempenho se mantem relativamente estavel.\n",
+    "\n",
+    "3. Dois problemas metodologicos possiveis sao: usar apenas uma divisao treino/teste em vez de validacao cruzada, e comparar modelos sem explorar hiperparametros com o mesmo cuidado para ambos. Isso pode favorecer um modelo injustamente.\n",
+    "\n",
+    "4. O pipeline implementado e confiavel como base, porque separa carregamento, treino e avaliacao de forma reproduzivel. Mesmo assim, ele pode ser melhorado com validacao cruzada, matriz de confusao e uma busca mais sistematica de hiperparametros.\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "provenance": []
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
